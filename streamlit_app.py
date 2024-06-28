@@ -45,7 +45,7 @@ class AudioProcessor(AudioProcessorBase):
     def get_audio_buffer(self):
         return self.audio_buffer
 
-        
+
 def main():
     st.title("Chatbot")  # Title at the top
 
@@ -60,11 +60,20 @@ def main():
     audio_file = st.file_uploader("Upload a voice file", type=["wav", "mp3", "m4a"])
 
     # Recorder button for direct mic input
-    webrtc_ctx = webrtc_streamer(key="example", mode=WebRtcMode.SENDONLY, audio_processor_factory=AudioProcessor)
-
+    webrtc_ctx = webrtc_streamer(
+        key="example",
+        mode=WebRtcMode.SENDONLY,
+        audio_processor_factory=AudioProcessor,
+        client_settings=ClientSettings(
+            media_stream_constraints={
+                "audio": True,
+                "video": False,
+            }
+        ),
+    )
     if webrtc_ctx.state.playing:
         if st.button("Stop Recording"):
-            webrtc_ctx.stop()
+            webrtc_ctx.state = WebRtcMode.OFF
             audio_buffer = webrtc_ctx.audio_processor.get_audio_buffer()
             if audio_buffer:
                 with open("temp_audio.wav", "wb") as f:
