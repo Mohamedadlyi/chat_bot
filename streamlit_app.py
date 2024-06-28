@@ -1,6 +1,5 @@
 import streamlit as st
 from groq import Groq
-import whisper
 
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 
