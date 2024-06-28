@@ -73,7 +73,7 @@ def main():
     )
     if webrtc_ctx.state.playing:
         if st.button("Stop Recording"):
-            # webrtc_ctx.state = webrtc_ctx.state.stopped
+            webrtc_ctx.state = WebRtcMode.STOPPED
             audio_buffer = webrtc_ctx.audio_processor.get_audio_buffer()
             if audio_buffer:
                 with open("temp_audio.wav", "wb") as f:
