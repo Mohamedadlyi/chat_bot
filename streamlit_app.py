@@ -1,23 +1,28 @@
 import streamlit as st
-from hugchat import hugchat
-from hugchat.login import Login
+from groq import Groq
 
 
-EMAIL = st.secrets["EMAIL"]
-PASSWD = st.secrets["PASSWD"]
-cookie_path_dir = "./cookies/"
+GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
 
-sign = Login(EMAIL, PASSWD)
-cookies = sign.login(cookie_dir_path=cookie_path_dir, save_cookies=True)
+client = Groq(
+    api_key=GROQ_API_KEY
+)
 
-def get_response(user_input):
-    chatbot = hugchat.ChatBot(cookies=cookies.get_dict())
-    for resp in chatbot.query(user_input, stream=True):
-        if resp is not None:
-            yield resp['token']
+def get_response(query):
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": query,
+            }
+        ],
+        model="llama3-70b-8192",
+    )
+
+    return chat_completion.choices[0].message.content
 
 def main():
-    st.title("Hugging Face Chatbot Clone")
+    st.title("Chatbot")
 
     if 'conversation' not in st.session_state:
         st.session_state.conversation = []
