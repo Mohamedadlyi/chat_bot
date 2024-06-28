@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_webrtc import webrtc_streamer, AudioProcessorBase, WebRtcMode
 from groq import Groq
 
 GROQ_API_KEY = st.secrets["GROQ_API_KEY"]
@@ -32,6 +33,19 @@ def transcribe_audio(audio_file):
     )
     return transcription.text
 
+
+class AudioProcessor(AudioProcessorBase):
+    def __init__(self) -> None:
+        self.audio_buffer = []
+
+    def recv(self, frame):
+        self.audio_buffer.append(frame.to_ndarray())
+        return frame
+
+    def get_audio_buffer(self):
+        return self.audio_buffer
+
+        
 def main():
     st.title("Chatbot")  # Title at the top
 
@@ -45,7 +59,20 @@ def main():
     # File uploader for voice input
     audio_file = st.file_uploader("Upload a voice file", type=["wav", "mp3", "m4a"])
 
-    if audio_file is not None:
+    # Recorder button for direct mic input
+    webrtc_ctx = webrtc_streamer(key="example", mode=WebRtcMode.SENDONLY, audio_processor_factory=AudioProcessor)
+
+    if webrtc_ctx.state.playing:
+        if st.button("Stop Recording"):
+            webrtc_ctx.stop()
+            audio_buffer = webrtc_ctx.audio_processor.get_audio_buffer()
+            if audio_buffer:
+                with open("temp_audio.wav", "wb") as f:
+                    f.write(b"".join(audio_buffer))
+                with st.spinner("Transcribing audio..."):
+                    user_input = transcribe_audio("temp_audio.wav")
+                    st.text_area("Transcribed Text", value=user_input, height=100)
+    elif audio_file is not None:
         with st.spinner("Transcribing audio..."):
             user_input = transcribe_audio(audio_file)
             st.text_area("Transcribed Text", value=user_input, height=100)
